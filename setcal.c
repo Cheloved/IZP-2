@@ -98,28 +98,39 @@ int splitElements(Line* line, char* str)
     line->elements = malloc(line->elementCount * sizeof(char*));
     int count = 0;
     int len = strLen(str);
-    int start = 2;
-    for ( int i = 2; i < len; i++ )
+
+    // Find index of first element (first space + 1)
+    int start = 0;
+    while ( str[start] != splitChar )
+        start++;
+    start++;
+
+    for ( int i = start; i < len; i++ )
     {
         if ( (str[i] == splitChar) || (i == (len - 1)) )
         {
-            Element elementBuf = calloc( (i - start + 1), sizeof(char));
+            int end = i - 1;
+            if ( i == len - 1 )
+                end++;
+            
+            if ( end - start == 0 )
+                continue;
 
+            Element elementBuf = calloc( (end - start + 1), sizeof(char));
             int charCount = 0;
-            for ( int j = start; j <= i; j++ )
+            for ( int j = start; j <= end; j++ )
             {
                 elementBuf[charCount] = str[j];
                 charCount++;
             }
-            /* !!! NEED TO FIX LAST CHARACTER */ 
-
-            printf("  Substring [%d ; %d) %s\n", start, i, elementBuf);
-
+            elementBuf[charCount] = '\0';
+            //printf("%s\n",elementBuf);
             line->elements[count] = elementBuf;
             count++;
             start = i + 1;
         }
     }
+    line->elementCount = count;
 
     return 0;
 }
@@ -141,12 +152,11 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
         case 'S': { _type = S; break; }
         case 'R': { _type = R; break; }
         case 'C': { _type = C; break; }
-        default: { fprintf(stderr, "Error: unknown identifier\n"); break; }
+        default: { fprintf(stderr, "Error: unknown identifier\n"); return -1; }
     }
 
     lineBuffer->_type = _type;
     lineBuffer->id    = id;
-    lineBuffer->elementCount = getElementCount(line, _type);
     if ( splitElements(lineBuffer, line) != 0 )
        return -1;
 
@@ -188,7 +198,12 @@ int readFile(char* path)
             return -1;
         
         lines[totalLines] = lineBuffer;
-        printf("    Id: %d\n    Type: %d\n    Element count: %d\n", lines[totalLines].id, lines[totalLines]._type, lines[totalLines].elementCount);        
+        printf("  Id: %d\n  Type: %d\n  Element count: %d\n", lines[totalLines].id, lines[totalLines]._type, lines[totalLines].elementCount);        
+        printf("  Elements:\n");
+
+        for ( int i = 0; i < lines[totalLines].elementCount; i++ )
+            printf("    Element %d: %s\n", i, lines[totalLines].elements[i]);
+
         totalLines++;
 
         if ( e == 1 )
