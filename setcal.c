@@ -6,12 +6,25 @@
 // Universe, set, relation, calculation
 enum DataType{ U, S, R, C };
 
+typedef struct Element_s Element;
+struct Element_s
+{
+    char c[31];
+};
+
+typedef struct RelationEl_s RelationElement;
+struct RelationEl_s
+{
+    Element leftElement;
+    Element RightElement;
+};
+
 typedef struct Line_s Line;
 struct Line_s
 {
     enum DataType _type;
     int              id;
-    char*  elements[31];
+    Element*   elements; 
     int    elementCount;
 }; 
 
@@ -33,10 +46,12 @@ int readLine(char** line, FILE* file, long fileSize)
 
     while ( (c = getc(file)) != '\n' )
     {
-        if ( ftell(file) >= fileSize )
+        if ( ftell(file) + 1 >= fileSize )
             lastLine = 1;
         len++;
     }
+    if ( len == 0 )
+        return 1;
 
     // Reset read pointer
     fseek(file, begin, SEEK_SET);
@@ -75,6 +90,13 @@ int getElementCount(char* line, enum DataType _type)
     return count;
 }
 
+int splitElements(Line* line)
+{
+    line->elements = malloc(line->elementCount * sizeof(char*));
+
+    return 0;
+}
+
 int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
 {
     // Read a line of data
@@ -98,6 +120,8 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
     lineBuffer->_type = _type;
     lineBuffer->id    = id;
     lineBuffer->elementCount = getElementCount(line, _type);
+    if ( splitElements(lineBuffer) != 0 )
+       return -1;
 
     if ( e == 1 )
         return 1;
@@ -106,7 +130,7 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
 
 long getFileSize(FILE* file)
 {
-    fseek(file, -1, SEEK_END);
+    fseek(file, 0, SEEK_END);
     int fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
     return fileSize;
