@@ -6,11 +6,8 @@
 // Universe, set, relation, calculation
 enum DataType{ U, S, R, C };
 
-typedef struct Element_s Element;
-struct Element_s
-{
-    char c[31];
-};
+typedef char* Element;
+
 
 typedef struct RelationEl_s RelationElement;
 struct RelationEl_s
@@ -22,10 +19,11 @@ struct RelationEl_s
 typedef struct Line_s Line;
 struct Line_s
 {
-    enum DataType _type;
-    int              id;
-    Element*   elements; 
-    int    elementCount;
+    enum DataType        _type;
+    int                     id;
+    Element*          elements; 
+    RelationElement* relations;
+    int           elementCount;
 }; 
 
 int strLen(char* str)
@@ -90,9 +88,38 @@ int getElementCount(char* line, enum DataType _type)
     return count;
 }
 
-int splitElements(Line* line)
+int splitElements(Line* line, char* str)
 {
+    char splitChar;
+    switch (line->_type) {
+        case R:  splitChar = '('; break;
+        default: splitChar = ' '; break;
+    }
     line->elements = malloc(line->elementCount * sizeof(char*));
+    int count = 0;
+    int len = strLen(str);
+    int start = 2;
+    for ( int i = 2; i < len; i++ )
+    {
+        if ( (str[i] == splitChar) || (i == (len - 1)) )
+        {
+            Element elementBuf = calloc( (i - start + 1), sizeof(char));
+
+            int charCount = 0;
+            for ( int j = start; j <= i; j++ )
+            {
+                elementBuf[charCount] = str[j];
+                charCount++;
+            }
+            /* !!! NEED TO FIX LAST CHARACTER */ 
+
+            printf("  Substring [%d ; %d) %s\n", start, i, elementBuf);
+
+            line->elements[count] = elementBuf;
+            count++;
+            start = i + 1;
+        }
+    }
 
     return 0;
 }
@@ -120,7 +147,7 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
     lineBuffer->_type = _type;
     lineBuffer->id    = id;
     lineBuffer->elementCount = getElementCount(line, _type);
-    if ( splitElements(lineBuffer) != 0 )
+    if ( splitElements(lineBuffer, line) != 0 )
        return -1;
 
     if ( e == 1 )
