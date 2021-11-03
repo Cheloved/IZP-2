@@ -81,7 +81,7 @@ int getElementCount(char* line, enum DataType _type)
     }
     int count = 0;
     int len = strLen(line);
-    for ( int i = 1; i < len; i++ )
+    for ( int i = 0; i < len; i++ )
         if ( line[i] == splitChar )
             count++;
 
@@ -95,7 +95,7 @@ int splitElements(Line* line, char* str)
         case R:  splitChar = '('; break;
         default: splitChar = ' '; break;
     }
-    line->elements = malloc(line->elementCount * sizeof(char*));
+    line->elements = calloc( line->elementCount, sizeof(char*) );
     int count = 0;
     int len = strLen(str);
 
@@ -105,6 +105,7 @@ int splitElements(Line* line, char* str)
         start++;
     start++;
 
+    Element elementBuf;
     for ( int i = start; i < len; i++ )
     {
         if ( (str[i] == splitChar) || (i == (len - 1)) )
@@ -112,20 +113,15 @@ int splitElements(Line* line, char* str)
             int end = i - 1;
             if ( i == len - 1 )
                 end++;
-            
-            if ( end - start == 0 )
-                continue;
 
-            Element elementBuf = calloc( (end - start + 1), sizeof(char));
+            line->elements[count] = calloc( (end - start + 2), sizeof(char) );
             int charCount = 0;
             for ( int j = start; j <= end; j++ )
             {
-                elementBuf[charCount] = str[j];
+                line->elements[count][charCount] = str[j];
                 charCount++;
             }
-            elementBuf[charCount] = '\0';
-            //printf("%s\n",elementBuf);
-            line->elements[count] = elementBuf;
+            line->elements[count][charCount] = 0;
             count++;
             start = i + 1;
         }
@@ -157,6 +153,7 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
 
     lineBuffer->_type = _type;
     lineBuffer->id    = id;
+    lineBuffer->elementCount = getElementCount(line, lineBuffer->_type);
     if ( splitElements(lineBuffer, line) != 0 )
        return -1;
 
