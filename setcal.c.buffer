@@ -88,18 +88,6 @@ int getElementCount(char* line, enum DataType _type)
     return count;
 }
 
-int findSpaceAfter(int begin, char* str)
-{
-    int index = begin;
-    while ( str[index] != ' ' )
-    {
-        index++;
-        if ( str[index] == 0 )
-            return index;
-    }
-    return index;
-}
-
 int splitElements(Line* line, char* str)
 {
     char splitChar;
@@ -131,7 +119,7 @@ int splitElements(Line* line, char* str)
             for ( int j = start; j <= end; j++ )
             {
                 if ( (line->_type == R) && (str[j] == ')') )
-                    break;
+                    continue;
                 line->elements[count][charCount] = str[j];
                 charCount++;
             }
@@ -146,12 +134,20 @@ int splitElements(Line* line, char* str)
     return 0;
 }
 
+int findSpace(char* str)
+{
+    int index = 0;
+    while ( str[index] != ' ' )
+        index++;
+    return index;
+}
+
 int subdivideRelations(Line* line)
 {
     line->relations = (RelationElements*)calloc(line->elementCount, sizeof(RelationElements*));
     for ( int i = 0; i < line->elementCount; i++ )
     {
-        int spaceIndex = findSpaceAfter(0, line->elements[i]);
+        int spaceIndex = findSpace(line->elements[i]);
         int len = strLen( line->elements[i] );
         line->relations[i].leftElement = calloc(spaceIndex + 1, sizeof(char));
         line->relations[i].RightElement = calloc(len - spaceIndex, sizeof(char));
@@ -161,6 +157,8 @@ int subdivideRelations(Line* line)
 
         for ( int j = spaceIndex + 1; j < len; j++ )
             line->relations[i].RightElement[ j - spaceIndex - 1] = line->elements[i][j];
+
+        printf("%s-%s", line->relations[i].leftElement, line->relations[i].RightElement);
     }
     return 0;
 }
