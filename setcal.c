@@ -40,6 +40,21 @@ int strLen(char* str)
     return i;
 }
 
+int strCmp(char* str1, char* str2)
+{
+    int len1 = strLen(str1);
+    int len2 = strLen(str2);
+
+    if ( len1 != len2 )
+        return 0;
+    
+    for ( int i = 0; i < len1; i++ )
+        if ( str1[i] != str2[i] )
+            return 0;
+
+    return 1;
+}
+
 int isEqual( Element e1, Element e2 )
 {
     int len1 = strLen( (char*)e1);
@@ -205,19 +220,20 @@ int indexOfRelationByNum(int left, int right, Line relation)
     return -1;
 }
 
-void reflexive(Line relation, Line universe)
+int reflexive(Line relation, Line universe)
 {
     for ( int i = 0; i < universe.elementCount; i++ )
         if ( indexOfRelationByNum(i, i, relation) == -1 )
         {
             printf("false\n");
-            return;
+            return 0;
         }
     
     printf("true\n");
+    return 1;
 }
 
-void symmetric(Line relation)
+int symmetric(Line relation)
 {
     for ( int i = 0; i < relation.elementCount; i++ )
     {
@@ -226,13 +242,14 @@ void symmetric(Line relation)
         if ( indexOfRelationByNum( right, left, relation ) == -1 )
         {
             printf("false\n");
-            return;
+            return 0;
         }
     }
     printf("true\n");
+    return 1;
 }
 
-void antisymmetric(Line relation)
+int antisymmetric(Line relation)
 {
     for ( int i = 0; i < relation.elementCount; i++ )
     {
@@ -243,14 +260,15 @@ void antisymmetric(Line relation)
             if ( left != right )
             {
                 printf("false\n");
-                return;
+                return 0;
             }
         }
     }
     printf("true\n");
+    return 1;
 }
 
-void transitive(Line relation)
+int transitive(Line relation)
 {
     for ( int i = 0; i < relation.elementCount; i++ )
     {
@@ -261,13 +279,14 @@ void transitive(Line relation)
                 if ( indexOfRelationByNum(a, c, relation) == -1 )
                 {
                     printf("false\n");
-                    return;
+                    return 0;
                 }
     }
     printf("true\n");
+    return 1;
 }
 
-void function(Line relation)
+int function(Line relation)
 {
     for ( int i = 0; i < relation.elementCount - 1; i++ )
     {
@@ -278,10 +297,11 @@ void function(Line relation)
                 if ( relation.relations[j]->rightIndex != right )
                 {
                     printf("false\n");
-                    return;
+                    return 0;
                 }
     }
     printf("true\n");
+    return 1;
 }
 
 int isIn ( int element, int* array, int arraySize )
@@ -293,7 +313,7 @@ int isIn ( int element, int* array, int arraySize )
     return 0;
 }
 
-void domain(Line relation)
+int domain(Line relation)
 {
     int maxLen = relation.elementCount;
     int* d = (int*)calloc(maxLen, sizeof(int));
@@ -307,9 +327,10 @@ void domain(Line relation)
             printf("%s ", relation.relations[i]->leftElement);
         }
     printf("\n");
+    return 0;
 }
 
-void codomain(Line relation)
+int codomain(Line relation)
 {
     int maxLen = relation.elementCount;
     int* d = (int*)calloc(maxLen, sizeof(int));
@@ -323,6 +344,62 @@ void codomain(Line relation)
             printf("%s ", relation.relations[i]->rightElement);
         }
     printf("\n");
+    return 0;
+}
+
+int injective(Line relation, int print)
+{
+    for ( int i = 0; i < relation.elementCount - 1; i++ )
+    {
+        int left = relation.relations[i]->leftIndex;
+        int right = relation.relations[i]->rightIndex;
+        for ( int j = i + 1; j < relation.elementCount; j++ )
+            if ( relation.relations[j]->rightIndex == right )
+                if ( relation.relations[j]->leftIndex != left )
+                {
+                    if ( print )
+                        printf("false\n");
+                    return 0;
+                }
+    }
+    if ( print )
+        printf("true\n");
+    return 1;
+}
+
+int surjective(Line relation, Line universe, int print)
+{
+    for ( int i = 0; i < universe.elementCount; i++ )
+    {
+        int argExists = 0;
+        for ( int j = 0; j < relation.elementCount; j++ )
+        {
+            if ( relation.relations[j]->rightIndex == universe.indexes[i] )
+            {
+                argExists = 1;
+                break;
+            }
+        }
+        if ( argExists )
+            continue;
+
+        if ( print )
+            printf("false\n");
+        return 0;
+    }
+    if ( print )
+        printf("true\n");
+    return 1;
+}
+
+int bijective(Line relation, Line universe)
+{
+    if ( injective(relation, 0) && surjective(relation, universe, 0) )
+        printf("true\n");
+    else
+        printf("false\n");
+    
+    return 0;
 }
 // -------------------------------------------- //
 
@@ -619,8 +696,11 @@ int readFile(char* path)
     char* setFunctionsBinarNames[7] = {"complement", "union", "intersect", "minus", "subseteq", "subset", "equals"};
     void(*setFunctionsBinar[7])(Line lineA, Line lineB) = {&complement, &_union, &intersect, &minus, &subseteq, &subset, &equals};
 
-    char* relFunctionNames[10] = { "reflexive", "symmetric", "antisymmetric", "transitive", "function", "domain", "codomain", "injective", "surjective", "bijective" };
+    char* relFunctionsNames_1arg[6] = { "symmetric", "antisymmetric", "transitive", "function", "domain", "codomain" };
+    int(*relFunctions_1arg[6])(Line line) = { &symmetric, &antisymmetric, &transitive, &function, &domain, &codomain };
 
+    char* relFunctionsNames_2arg[2] = { "reflexive", "bijective" };
+    int(*relFunctions_2arg[2])(Line line, Line universe) = { &reflexive, &bijective };
 
     // Return value placeholder
     int e = 0;     
@@ -667,6 +747,18 @@ int readFile(char* path)
             // Check if calling binary operation
             if ( (funcIdx = indexOfStr(command, setFunctionsBinarNames, 7)) != -1 )
                 setFunctionsBinar[funcIdx]( lines[commandIdx1 - 1], lines[commandIdx2 - 1] ); 
+
+            if ( (funcIdx = indexOfStr(command, relFunctionsNames_1arg, 6)) != -1 )
+                relFunctions_1arg[funcIdx]( lines[commandIdx1 - 1] );
+
+            if ( (funcIdx = indexOfStr(command, relFunctionsNames_2arg, 2)) != -1 )
+                relFunctions_2arg[funcIdx]( lines[commandIdx1 - 1], lines[0] );
+
+            if ( strCmp(command, "injective") )
+                injective(lines[commandIdx1 - 1], 1);
+
+            if ( strCmp(command, "surjective") )
+                surjective(lines[commandIdx1 - 1], lines[0], 1);
         }
 
         // Increase number of readed lines
