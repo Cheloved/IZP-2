@@ -249,6 +249,25 @@ void antisymmetric(Line relation)
     }
     printf("true\n");
 }
+
+void transitive(Line relation, Line universe)
+{
+    for ( int i = 0; i < relation.elementCount; i++ )
+    {
+        int a = relation.relations[i]->leftIndex;
+        int b = relation.relations[i]->rightIndex;
+        for ( int c = 0; c < relation.elementCount; c++ )
+            if ( indexOfRelationByNum(b, c, relation) != -1 ) 
+                if ( indexOfRelationByNum(a, c, relation) == -1 )
+                {
+                    printf("false\n");
+                    return;
+                }
+    }
+    printf("true\n");
+}
+
+
 // -------------------------------------------- //
 
 int readLine(char** line, FILE* file, long fileSize)
