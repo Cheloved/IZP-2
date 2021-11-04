@@ -525,7 +525,7 @@ int readFile(char* path)
             // Get arguments
             int commandIdx1 = atoi( lines[totalLines].elements[1] );
 
-            int commandIdx2 = -1;
+            int commandIdx2 = 1;
             // If there's more than 1 argument
             if ( lines[totalLines].elementCount > 2 )
                 commandIdx2 = atoi( lines[totalLines].elements[2] );
