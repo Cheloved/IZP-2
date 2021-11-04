@@ -192,9 +192,64 @@ void equals(Line lineA, Line lineB)
 
     printf("true");
 }
-
 // --------------------------------------- //
 
+// ----- Functions working with relations ----- //
+int indexOfRelationByNum(int left, int right, Line relation)
+{
+    for ( int i = 0; i < relation.elementCount; i++ )
+        if ( left == relation.relations[i]->leftIndex )
+            if ( right == relation.relations[i]->rightIndex )
+                return i;
+    
+    return -1;
+}
+
+void reflexive(Line relation, Line universe)
+{
+    for ( int i = 0; i < universe.elementCount; i++ )
+        if ( indexOfRelationByNum(i, i, relation) == -1 )
+        {
+            printf("false\n");
+            return;
+        }
+    
+    printf("true\n");
+}
+
+void symmetric(Line relation)
+{
+    for ( int i = 0; i < relation.elementCount; i++ )
+    {
+        int left = relation.relations[i]->leftIndex;
+        int right = relation.relations[i]->rightIndex;
+        if ( indexOfRelationByNum( right, left, relation ) == -1 )
+        {
+            printf("false\n");
+            return;
+        }
+    }
+    printf("true\n");
+}
+
+void antisymmetric(Line relation)
+{
+    for ( int i = 0; i < relation.elementCount; i++ )
+    {
+        int left = relation.relations[i]->leftIndex;
+        int right = relation.relations[i]->rightIndex;
+        if ( indexOfRelationByNum( right, left, relation ) != -1 )
+        {
+            if ( left != right )
+            {
+                printf("false\n");
+                return;
+            }
+        }
+    }
+    printf("true\n");
+}
+// -------------------------------------------- //
 
 int readLine(char** line, FILE* file, long fileSize)
 {
