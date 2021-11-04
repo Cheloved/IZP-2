@@ -8,7 +8,8 @@ enum DataType{ U, S, R, C };
 
 typedef char* Element;
 
-
+// Struct for relations
+// (leftElement, rightElement)
 typedef struct RelationEl_s RelationElement;
 struct RelationEl_s
 {
@@ -18,6 +19,7 @@ struct RelationEl_s
     int rightIndex;
 };
 
+// Struct for data lines
 typedef struct Line_s Line;
 struct Line_s
 {
@@ -37,6 +39,115 @@ int strLen(char* str)
 
     return i;
 }
+
+int isEqual( Element e1, Element e2 )
+{
+    int len1 = strLen( (char*)e1);
+    int len2 = strLen( (char*)e2);
+
+    if ( len1 != len2 )
+        return 0;
+    
+    for ( int i = 0; i < len1; i++ )
+        if ( e1[i] != e2[i] )
+            return 0;
+    
+    return 1;
+}
+
+// Returns index of element e in line
+int indexOf(Element e, Line* line)
+{
+    for ( int i = 0; i < line->elementCount; i++ )
+    {
+        if ( isEqual(e, line->elements[i]) )
+            return i;
+    }
+    return -1;
+}
+
+/* HAVE TO MAKE INDEX OF ELEMENT BY INDEX VALUE, NOT BY CHAR* */
+
+// ----- Functions working with sets ----- //
+
+// Checks wheather set is empty or not
+void empty(Line line)
+{
+    if ( line.elementCount > 0 )
+        printf("false\n");
+    else
+        printf("true\n");
+}
+
+// Prints number of elements in the set
+void card(Line line)
+{
+    printf("%d\n", line.elementCount);
+}
+
+// Prints complement of set 
+void complement(Line line, Line universe)
+{
+    for( int i = 0; i < universe.elementCount; i++ )
+    {
+        if ( indexOf(universe.elements[i], &line) == -1 )
+            printf("%s ", universe.elements[i]);
+    }
+    printf("\n");
+}
+
+void _union(Line lineA, Line lineB)
+{
+    for ( int i = 0; i < lineA.elementCount; i++ )
+        printf("%s ", lineA.elements[i]);
+    
+    for ( int i = 0; i < lineB.elementCount; i++ )
+        if ( indexOf(lineB.elements[i], &lineA) == -1 )
+            printf("%s ", lineB.elements[i]);
+    
+    printf("\n");
+}
+
+void intersect(Line lineA, Line lineB)
+{
+    for ( int i = 0; i < lineA.elementCount; i++ )
+        if ( indexOf(lineA.elements[i], &lineB) != -1 )
+            printf("%s ", lineA.elements[i]);
+    printf("\n");
+}
+
+void minus(Line lineA, Line lineB)
+{
+    for ( int i = 0; i < lineA.elementCount; i++ )
+        if ( indexOf(lineA.elements[i], &lineB) == -1 )
+            printf("%s ", lineA.elements[i]);
+    printf("\n");
+}
+
+void equals(Line lineA, Line lineB)
+{
+    if ( lineA.elementCount != lineB.elementCount )
+    {
+        printf("false");
+        return;
+    }
+    int eqv = 1;
+    for ( int i = 0; i < lineA.elementCount; i++ )
+        if ( lineA.elements[i] != lineB.elements[i] ) { eqv = 0; break; }
+
+    if ( eqv )
+        printf("true");
+    else
+        printf("false");
+}
+
+void subseteq(Line lineA, Line lineB)
+{
+    // smth
+}
+
+// --------------------------------------- //
+
 
 int readLine(char** line, FILE* file, long fileSize)
 {
@@ -221,32 +332,6 @@ long getFileSize(FILE* file)
     return fileSize;
 }
 
-int isEqual( Element e1, Element e2 )
-{
-    int len1 = strLen( (char*)e1);
-    int len2 = strLen( (char*)e2);
-
-    if ( len1 != len2 )
-        return 0;
-    
-    for ( int i = 0; i < len1; i++ )
-        if ( e1[i] != e2[i] )
-            return 0;
-    
-    return 1;
-}
-
-int indexOf(Element e, Line* universe)
-{
-    for ( int i = 0; i < universe->elementCount; i++ )
-    {
-        if ( isEqual(e, universe->elements[i]) )
-            return i;
-    }
-    printf("Error: there's not %s in Universe", e);
-    return -1;
-}
-
 int assingnUniverse(Line* line)
 {
     line->indexes = calloc(line->elementCount, sizeof(int));
@@ -265,9 +350,17 @@ int assignElementIndexes(Line* line, Line* universe)
         for ( int i = 0; i < line->elementCount; i++ )
         {
             int idxLeft = indexOf(line->relations[i]->leftElement, universe);
-            int idxRight = indexOf(line->relations[i]->rightElement, universe);
-            if ( (idxLeft == -1) || (idxRight == -1) )
+            if (idxLeft == -1)
+            {
+                printf("Error: %s does not exists in universe\n", line->relations[i]->leftElement);
                 return -1;
+            }
+            int idxRight = indexOf(line->relations[i]->rightElement, universe);
+            if (idxRight == -1)
+            {
+                printf("Error: %s does not exists in universe\n", line->relations[i]->rightElement);
+                return -1;
+            }
 
             line->relations[i]->leftIndex = idxLeft;
             line->relations[i]->rightIndex = idxRight;
@@ -345,7 +438,7 @@ int readFile(char* path)
 
     char* setFunctionsUnarNames[2] = {"empty", "card"};
     char* setFunctionsBinarNames[7] = {"complement", "union", "intersect", "minus", "subseteq", "subset", "equals"};
-    void(*setFunctionsUnar)(Line line); // = {&empty, &card};
+    void(*setFunctionsUnar[2])(Line line) = {&empty, &card};
     void(*setFunctionsBinar)(Line lineA, Line lineB); // = {&complement, &union, &intersect, &minus, &subseteq, &subset, &equals}
 
     char* relFunctionNames[10] = { "reflexive", "symmetric", "antisymmetric", "transitive", "function", "domain", "codomain", "injective", "surjective", "bijective" };
