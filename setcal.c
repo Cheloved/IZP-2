@@ -283,6 +283,47 @@ void function(Line relation)
     }
     printf("true\n");
 }
+
+int isIn ( int element, int* array, int arraySize )
+{
+    for ( int i = 0; i < arraySize; i++ )
+        if ( element == array[i] )
+            return 1;
+    
+    return 0;
+}
+
+void domain(Line relation)
+{
+    int maxLen = relation.elementCount;
+    int* d = (int*)calloc(maxLen, sizeof(int));
+    for ( int i = 0; i < maxLen; i++ )
+        d[i] = -1;
+
+    for ( int i = 0; i < maxLen; i++ )
+        if ( !isIn(relation.relations[i]->leftIndex, d, maxLen) )
+        {
+            d[i] = relation.relations[i]->leftIndex;
+            printf("%s ", relation.relations[i]->leftElement);
+        }
+    printf("\n");
+}
+
+void codomain(Line relation)
+{
+    int maxLen = relation.elementCount;
+    int* d = (int*)calloc(maxLen, sizeof(int));
+    for ( int i = 0; i < maxLen; i++ )
+        d[i] = -1;
+
+    for ( int i = 0; i < maxLen; i++ )
+        if ( !isIn(relation.relations[i]->rightIndex, d, maxLen) )
+        {
+            d[i] = relation.relations[i]->rightIndex;
+            printf("%s ", relation.relations[i]->rightElement);
+        }
+    printf("\n");
+}
 // -------------------------------------------- //
 
 int readLine(char** line, FILE* file, long fileSize)
