@@ -55,18 +55,33 @@ int isEqual( Element e1, Element e2 )
     return 1;
 }
 
-// Returns index of element e in line
-int indexOf(Element e, Line* line)
+int indexOfStr(char* str, char** array, int arraySize)
 {
-    for ( int i = 0; i < line->elementCount; i++ )
+    for( int i = 0; i < arraySize; i++ )
     {
-        if ( isEqual(e, line->elements[i]) )
+        if ( isEqual(str, array[i]) )
             return i;
     }
     return -1;
 }
 
-/* HAVE TO MAKE INDEX OF ELEMENT BY INDEX VALUE, NOT BY CHAR* */
+// Returns index of element e in line
+int indexOf(Element e, Line* line)
+{
+    for ( int i = 0; i < line->elementCount; i++ )
+        if ( isEqual(e, line->elements[i]) )
+            return i;
+    return -1;
+}
+
+// Return index of universe[idx] in line
+int indexByNum(int idx, Line* line)
+{
+    for ( int i = 0; i < line->elementCount; i++ )
+        if ( idx == line->indexes[i] )
+            return i;
+    return -1;
+}
 
 // ----- Functions working with sets ----- //
 
@@ -90,7 +105,7 @@ void complement(Line line, Line universe)
 {
     for( int i = 0; i < universe.elementCount; i++ )
     {
-        if ( indexOf(universe.elements[i], &line) == -1 )
+        if ( indexByNum(universe.indexes[i], &line) == -1 )
             printf("%s ", universe.elements[i]);
     }
     printf("\n");
@@ -102,7 +117,7 @@ void _union(Line lineA, Line lineB)
         printf("%s ", lineA.elements[i]);
     
     for ( int i = 0; i < lineB.elementCount; i++ )
-        if ( indexOf(lineB.elements[i], &lineA) == -1 )
+        if ( indexByNum(lineB.indexes[i], &lineA) == -1 )
             printf("%s ", lineB.elements[i]);
     
     printf("\n");
@@ -111,7 +126,7 @@ void _union(Line lineA, Line lineB)
 void intersect(Line lineA, Line lineB)
 {
     for ( int i = 0; i < lineA.elementCount; i++ )
-        if ( indexOf(lineA.elements[i], &lineB) != -1 )
+        if ( indexByNum(lineA.indexes[i], &lineB) != -1 )
             printf("%s ", lineA.elements[i]);
     printf("\n");
 }
@@ -119,9 +134,45 @@ void intersect(Line lineA, Line lineB)
 void minus(Line lineA, Line lineB)
 {
     for ( int i = 0; i < lineA.elementCount; i++ )
-        if ( indexOf(lineA.elements[i], &lineB) == -1 )
+        if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
             printf("%s ", lineA.elements[i]);
     printf("\n");
+}
+
+void subseteq(Line lineA, Line lineB)
+{
+    if ( lineB.elementCount < lineA.elementCount )
+    {
+        printf("false\n");
+        return;
+    }
+
+    for( int i = 0; i < lineA.elementCount; i++ )
+        if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
+        {
+            printf("false\n");
+            return;
+        }
+    
+    printf("true\n");
+}
+
+void subset(Line lineA, Line lineB)
+{
+    if ( lineB.elementCount <= lineA.elementCount )
+    {
+        printf("false\n");
+        return;
+    }
+
+    for( int i = 0; i < lineA.elementCount; i++ )
+        if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
+        {
+            printf("false\n");
+            return;
+        }
+    
+    printf("true\n");
 }
 
 void equals(Line lineA, Line lineB)
@@ -133,17 +184,13 @@ void equals(Line lineA, Line lineB)
     }
     int eqv = 1;
     for ( int i = 0; i < lineA.elementCount; i++ )
-        if ( lineA.elements[i] != lineB.elements[i] ) { eqv = 0; break; }
+        if ( lineA.indexes[i] != lineB.indexes[i] ) 
+        {
+            printf("false\n");
+            return;
+        }
 
-    if ( eqv )
-        printf("true");
-    else
-        printf("false");
-}
-
-void subseteq(Line lineA, Line lineB)
-{
-    // smth
+    printf("true");
 }
 
 // --------------------------------------- //
@@ -437,11 +484,13 @@ int readFile(char* path)
     Line lineBuffer;
 
     char* setFunctionsUnarNames[2] = {"empty", "card"};
-    char* setFunctionsBinarNames[7] = {"complement", "union", "intersect", "minus", "subseteq", "subset", "equals"};
     void(*setFunctionsUnar[2])(Line line) = {&empty, &card};
-    void(*setFunctionsBinar)(Line lineA, Line lineB); // = {&complement, &union, &intersect, &minus, &subseteq, &subset, &equals}
+
+    char* setFunctionsBinarNames[7] = {"complement", "union", "intersect", "minus", "subseteq", "subset", "equals"};
+    void(*setFunctionsBinar[7])(Line lineA, Line lineB) = {&complement, &_union, &intersect, &minus, &subseteq, &subset, &equals};
 
     char* relFunctionNames[10] = { "reflexive", "symmetric", "antisymmetric", "transitive", "function", "domain", "codomain", "injective", "surjective", "bijective" };
+
 
     // Return value placeholder
     int e = 0;     
@@ -463,6 +512,32 @@ int readFile(char* path)
             assignElementIndexes(&lines[totalLines], &lines[0]);
 
         printDataLine(lines[totalLines]);
+
+        // If line contains calculation
+        if ( lines[totalLines]._type == C )
+        {
+            // Define index of calc function
+            int funcIdx = -1;
+
+            // Get command
+            char* command = lines[totalLines].elements[0];
+
+            // Get arguments
+            int commandIdx1 = atoi( lines[totalLines].elements[1] );
+
+            int commandIdx2 = -1;
+            // If there's more than 1 argument
+            if ( lines[totalLines].elementCount > 2 )
+                commandIdx2 = atoi( lines[totalLines].elements[2] );
+
+            // Check if calling unar operation
+            if ( (funcIdx = indexOfStr(command, setFunctionsUnarNames, 2)) != -1 )
+                setFunctionsUnar[funcIdx]( lines[commandIdx1 - 1] ); 
+
+            // Check if calling binary operation
+            if ( (funcIdx = indexOfStr(command, setFunctionsBinarNames, 7)) != -1 )
+                setFunctionsBinar[funcIdx]( lines[commandIdx1 - 1], lines[commandIdx2 - 1] ); 
+        }
 
         // Increase number of readed lines
         totalLines++;
