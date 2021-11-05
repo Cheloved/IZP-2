@@ -3,13 +3,22 @@
 #include <malloc.h>
 #include <string.h>
 
+// ----- Define new data types ----- //
+
 // Universe, set, relation, calculation
 enum DataType{ U, S, R, C };
 
+// For better readability
 typedef char* Element;
 
-// Struct for relations
-// (leftElement, rightElement)
+/*
+    Struct for relation's elements.
+
+    Since universe contains all possible elements,
+    instead of working with char arrays, it's
+    easyer and faster to use ints, so
+    (leftElement rightElement) = (universe[leftIndex] universe[rightIndex])
+*/
 typedef struct RelationEl_s RelationElement;
 struct RelationEl_s
 {
@@ -19,18 +28,29 @@ struct RelationEl_s
     int rightIndex;
 };
 
-// Struct for data lines
+/*
+    Struct for data lines
+
+    Same thing as above.
+    elements[i] = universe[ indexes[i] ]
+    ^ char        ^ char    ^ int
+*/
 typedef struct Line_s Line;
 struct Line_s
 {
-    enum DataType            _type;
-    int                         id;
-    Element*              elements; 
-    int*                   indexes;
-    RelationElement**    relations;
-    int               elementCount;
-}; 
+    int                         id; // Number of row + 1 ( universe.id = 1, etc)
+    enum DataType            _type; // U/S/R/C for universe, set, relation and calculation
 
+    int               elementCount; // Number of elements in line(does not include type)
+    Element*              elements; // Array of elements (*char)
+    int*                   indexes; // Array of indexes of elements in universe
+
+    RelationElement**    relations; // Pointer to an array of relation elements
+}; 
+// --------------------------------- //
+
+// ----- Functions working with strings ----- //
+// Gets length of string
 int strLen(char* str)
 {
     int i = 0;
@@ -40,6 +60,7 @@ int strLen(char* str)
     return i;
 }
 
+// Compares two strings. Return 1 if they're equal
 int strCmp(char* str1, char* str2)
 {
     int len1 = strLen(str1);
@@ -54,22 +75,19 @@ int strCmp(char* str1, char* str2)
 
     return 1;
 }
+// ------------------------------------------ //
 
+// ----- Functions working with set's/relation's elements ----- //
+
+// Compares two elements
+// ( added for better readability )
 int isEqual( Element e1, Element e2 )
 {
-    int len1 = strLen( (char*)e1);
-    int len2 = strLen( (char*)e2);
-
-    if ( len1 != len2 )
-        return 0;
-    
-    for ( int i = 0; i < len1; i++ )
-        if ( e1[i] != e2[i] )
-            return 0;
-    
-    return 1;
+    return strCmp((char*) e1, (char*) e2);
 }
 
+// Find index of string in array if it exists in there.
+// If not, return -1;
 int indexOfStr(char* str, char** array, int arraySize)
 {
     for( int i = 0; i < arraySize; i++ )
@@ -80,7 +98,8 @@ int indexOfStr(char* str, char** array, int arraySize)
     return -1;
 }
 
-// Returns index of element e in line
+// Find index of element in data line.
+// If element is not in data line, return -1;
 int indexOf(Element e, Line* line)
 {
     for ( int i = 0; i < line->elementCount; i++ )
@@ -89,7 +108,9 @@ int indexOf(Element e, Line* line)
     return -1;
 }
 
-// Return index of universe[idx] in line
+// This function works faster than the one above, 
+// because comparing strings takes more steps, that
+// comparing numbers.
 int indexByNum(int idx, Line* line)
 {
     for ( int i = 0; i < line->elementCount; i++ )
@@ -97,6 +118,19 @@ int indexByNum(int idx, Line* line)
             return i;
     return -1;
 }
+
+// Get index of relation element in relation data line.
+// If not exists, return -1
+int indexOfRelationByNum(int left, int right, Line relation)
+{
+    for ( int i = 0; i < relation.elementCount; i++ )
+        if ( left == relation.relations[i]->leftIndex )
+            if ( right == relation.relations[i]->rightIndex )
+                return i;
+    
+    return -1;
+}
+// ------------------------------------------------------------ //
 
 // ----- Functions working with sets ----- //
 
@@ -118,68 +152,81 @@ void card(Line line)
 // Prints complement of set 
 void complement(Line line, Line universe)
 {
-    for( int i = 0; i < universe.elementCount; i++ )
-    {
-        if ( indexByNum(universe.indexes[i], &line) == -1 )
+    for( int i = 0; i < universe.elementCount; i++ )         // Go through all elements in universe.
+    {                                                        // If element does not exists in this set,
+        if ( indexByNum(universe.indexes[i], &line) == -1 )  // print it
             printf("%s ", universe.elements[i]);
     }
     printf("\n");
 }
 
+// Prints union of two sets
 void _union(Line lineA, Line lineB)
 {
-    for ( int i = 0; i < lineA.elementCount; i++ )
-        printf("%s ", lineA.elements[i]);
+    for ( int i = 0; i < lineA.elementCount; i++ )         // Print all the elements
+        printf("%s ", lineA.elements[i]);                  // in first set
     
-    for ( int i = 0; i < lineB.elementCount; i++ )
-        if ( indexByNum(lineB.indexes[i], &lineA) == -1 )
-            printf("%s ", lineB.elements[i]);
+    for ( int i = 0; i < lineB.elementCount; i++ )         // Than check, wheather elements from B
+        if ( indexByNum(lineB.indexes[i], &lineA) == -1 )  // exist in A.
+            printf("%s ", lineB.elements[i]);              // If not, print it
     
     printf("\n");
 }
 
+// Prints intersection of two sets
 void intersect(Line lineA, Line lineB)
 {
-    for ( int i = 0; i < lineA.elementCount; i++ )
-        if ( indexByNum(lineA.indexes[i], &lineB) != -1 )
-            printf("%s ", lineA.elements[i]);
+    for ( int i = 0; i < lineA.elementCount; i++ )         // If elements exists in A
+        if ( indexByNum(lineA.indexes[i], &lineB) != -1 )  // AND in B,
+            printf("%s ", lineA.elements[i]);              // print it
     printf("\n");
 }
 
+// Prints A \ B
 void minus(Line lineA, Line lineB)
 {
-    for ( int i = 0; i < lineA.elementCount; i++ )
-        if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
-            printf("%s ", lineA.elements[i]);
+    for ( int i = 0; i < lineA.elementCount; i++ )         // If element exists in A,
+        if ( indexByNum(lineA.indexes[i], &lineB) == -1 )  // but does not exist in B,
+            printf("%s ", lineA.elements[i]);              // Print it
     printf("\n");
 }
 
+// Checks, wheather set A is subset of B
 void subseteq(Line lineA, Line lineB)
 {
+    // Number of elements in B should be greater
+    // than in A
     if ( lineB.elementCount < lineA.elementCount )
     {
         printf("false\n");
         return;
     }
 
+    // All elements in A should exist in B.
+    // If at least one does not, print "false"
     for( int i = 0; i < lineA.elementCount; i++ )
         if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
         {
             printf("false\n");
             return;
         }
-    
+
     printf("true\n");
 }
 
+// Checks if A is proper subset of B
 void subset(Line lineA, Line lineB)
 {
+    // Number of elements in A should be neither
+    // greater nor equal(in this case they could be equal)
     if ( lineB.elementCount <= lineA.elementCount )
     {
         printf("false\n");
         return;
     }
 
+    // All elements in A should exist in B.
+    // If at least one does not, print "false"
     for( int i = 0; i < lineA.elementCount; i++ )
         if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
         {
@@ -190,16 +237,19 @@ void subset(Line lineA, Line lineB)
     printf("true\n");
 }
 
+// Checks if A equals B
 void equals(Line lineA, Line lineB)
 {
+    // Cardinality should be equal
     if ( lineA.elementCount != lineB.elementCount )
     {
         printf("false");
         return;
     }
-    int eqv = 1;
+
+    // If at least one element is not 
     for ( int i = 0; i < lineA.elementCount; i++ )
-        if ( lineA.indexes[i] != lineB.indexes[i] ) 
+        if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
         {
             printf("false\n");
             return;
@@ -210,15 +260,7 @@ void equals(Line lineA, Line lineB)
 // --------------------------------------- //
 
 // ----- Functions working with relations ----- //
-int indexOfRelationByNum(int left, int right, Line relation)
-{
-    for ( int i = 0; i < relation.elementCount; i++ )
-        if ( left == relation.relations[i]->leftIndex )
-            if ( right == relation.relations[i]->rightIndex )
-                return i;
-    
-    return -1;
-}
+
 
 int reflexive(Line relation, Line universe)
 {
