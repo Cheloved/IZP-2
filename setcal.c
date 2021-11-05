@@ -407,14 +407,16 @@ int codomain(Line relation)
 // Checks if relations is injective
 int injective(Line relation, int print)
 {
+    // If it's called from bijective function
+    // print == 0
     for ( int i = 0; i < relation.elementCount - 1; i++ )
     {
         int left = relation.relations[i]->leftIndex;
         int right = relation.relations[i]->rightIndex;
         for ( int j = i + 1; j < relation.elementCount; j++ )
-            if ( relation.relations[j]->rightIndex == right )
-                if ( relation.relations[j]->leftIndex != left )
-                {
+            if ( relation.relations[j]->rightIndex == right )   // If for the same right parts
+                if ( relation.relations[j]->leftIndex != left ) // there're different left
+                {                                               // relation is not injective
                     if ( print )
                         printf("false\n");
                     return 0;
@@ -425,11 +427,14 @@ int injective(Line relation, int print)
     return 1;
 }
 
+// Checks if relation is surjective
 int surjective(Line relation, Line universe, int print)
 {
-    for ( int i = 0; i < universe.elementCount; i++ )
-    {
-        int argExists = 0;
+    // If it's called from bijective function
+    // print == 0
+    for ( int i = 0; i < universe.elementCount; i++ )                       // Each element in universe
+    {                                                                       // should have at least one
+        int argExists = 0;                                                  // 'left' in relation
         for ( int j = 0; j < relation.elementCount; j++ )
         {
             if ( relation.relations[j]->rightIndex == universe.indexes[i] )
@@ -450,6 +455,8 @@ int surjective(Line relation, Line universe, int print)
     return 1;
 }
 
+// Checks if relation is bijective
+// (should be either injective AND surjective)
 int bijective(Line relation, Line universe)
 {
     if ( injective(relation, 0) && surjective(relation, universe, 0) )
@@ -461,31 +468,36 @@ int bijective(Line relation, Line universe)
 }
 // -------------------------------------------- //
 
+// Reads one line from file
 int readLine(char** line, FILE* file, long fileSize)
 {
-    char c;            // Buffer character
-    int len = 0;       // Find length of the line
-    int lastLine = 0;  // Whether it's the last line in file or not
-    long begin = ftell(file);
+    char c;                   // Buffer character
+    int len = 0;              // Length of the line
+    int lastLine = 0;         // Whether it's the last line in file or not
+    long begin = ftell(file); // Current position in file
 
+    // Find length of the line first
     while ( (c = getc(file)) != '\n' )
     {
         len++;
+        // Catch end of file
         if ( ftell(file) + 1 >= fileSize )
         {
             lastLine = 1;
             break;
         }
     }
+    // If line is empty, stop reading
     if ( len == 0 )
         return 1;
 
-    // Reset read pointer
+    // Reset read position
     fseek(file, begin, SEEK_SET);
 
-    // Allocate memory
+    // Allocate memory for characters
     *line = malloc(len * sizeof(char) + sizeof(char));
-    // Read line
+
+    // Read line char by char
     for ( int i = 0; i < len; i++ )
         *(*line + i) = getc(file);
 
@@ -495,19 +507,24 @@ int readLine(char** line, FILE* file, long fileSize)
     // Skip '\n' character
     fseek(file, 1, SEEK_CUR);
 
+    // Stop reading if it was last line
     if ( lastLine )
         return 1;
 
     return 0;
 }
 
+// Get elements count according to data type
 int getElementCount(char* line, enum DataType _type)
 {
+    // Get character, by which string will be splitted
     char splitChar;
     switch (_type) {
         case R:  splitChar = '('; break;
         default: splitChar = ' '; break;
     }
+
+    // Get number of that characters
     int count = 0;
     int len = strLen(line);
     for ( int i = 0; i < len; i++ )
@@ -517,59 +534,80 @@ int getElementCount(char* line, enum DataType _type)
     return count;
 }
 
+// Find first space in string after 'begin' character
 int findSpaceAfter(int begin, char* str)
 {
     int index = begin;
     while ( str[index] != ' ' )
     {
         index++;
-        if ( str[index] == 0 )
-            return index;
+        if ( str[index] == 0 )  // Later we'll use index of 
+            return index;       // end-of-line, so return it if there's no spaces
     }
     return index;
 }
 
+// Splits string into elements
 int splitElements(Line* line, char* str)
 {
+    // Get split char according to type of data
     char splitChar;
     switch (line->_type) {
         case R:  splitChar = '('; break;
         default: splitChar = ' '; break;
     }
+
+    // Allocate memory for elements
     line->elements = calloc( line->elementCount, sizeof(char*) );
-    int count = 0;
-    int len = strLen(str);
+
+    int count = 0;         // Number of elements that was readed
+    int len = strLen(str); // Length of string
 
     // Find index of first element (first space + 1)
-    int start = 0;
+    int start = 0; 
     while ( str[start] != splitChar )
         start++;
     start++;
 
-    Element elementBuf;
+    // This loop goes though the string
+    // char by char
     for ( int i = start; i < len; i++ )
     {
+        // If current character equeals split char
+        // or it's the last character in line,
+        // get element and write it
         if ( (str[i] == splitChar) || (i == (len - 1)) )
         {
+            // Get index of an end of the element
             int end = i - 1;
+
+            // Without this condition, last element will lose last char
             if ( i == len - 1 )
                     end++;
 
+            // Allocate memory for element
             line->elements[count] = calloc( (end - start + 2), sizeof(char) );
-            int charCount = 0;
+
+            // Number of characters that was readed
+            int charCount = 0; 
+
+            // Go from start index to end index
             for ( int j = start; j <= end; j++ )
             {
+                // Skip right bracket 
                 if ( (line->_type == R) && (str[j] == ')') )
                     break;
-                line->elements[count][charCount] = str[j];
-                charCount++;
+
+                line->elements[count][charCount] = str[j];    // Set character 
+                charCount++;                                  // Increase number
             }
 
-            line->elements[count][charCount] = 0;
-            count++;
-            start = i + 1;
+            line->elements[count][charCount] = 0;             // Set end-of-string
+            count++;                                          // Increase number
+            start = i + 1;                                    // Move start index
         }
     }
+    // Rewrite element count
     line->elementCount = count;
 
     return 0;
