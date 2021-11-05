@@ -761,6 +761,7 @@ int assignElementIndexes(Line* line, Line* universe)
     return 0;
 }
 
+// ! ! ! DELETE THIS FUNCTION ! ! ! //
 void printDataLine(Line line)
 {
     printf("Data line %d\n", line.id);
@@ -795,6 +796,8 @@ void printDataLine(Line line)
     }
 }
 
+// Reads file file by line and calls
+// the corresponding functions
 int readFile(char* path)
 {
     // Open file and check if it exists
@@ -812,12 +815,21 @@ int readFile(char* path)
     // Max number of lines is 1000
     Line lines[1000];
 
-    // Count of readed lines
-    int  totalLines = 0;
+    // Number of readed lines
+    int totalLines = 0;
 
-    // Buffer for current line
+    // Buffer for a current line
     Line lineBuffer;
 
+    /*
+        Instead of using a large switch-case
+        or tons of if-elses,
+        it's possible to subdivide functions of the same type
+        into groups and make the arrays of function pointers.
+
+        type_function_smth_names is to relate
+        command to functions 
+    */
     char* setFunctionsUnarNames[2] = {"empty", "card"};
     void(*setFunctionsUnar[2])(Line line) = {&empty, &card};
 
@@ -829,6 +841,10 @@ int readFile(char* path)
 
     char* relFunctionsNames_2arg[2] = { "reflexive", "bijective" };
     int(*relFunctions_2arg[2])(Line line, Line universe) = { &reflexive, &bijective };
+    /*
+        injective and surjective are not here,
+        because of their arguments
+    */
 
     // Return value placeholder
     int e = 0;     
@@ -849,6 +865,7 @@ int readFile(char* path)
         else
             assignElementIndexes(&lines[totalLines], &lines[0]);
 
+        // ! ! ! DELETE THIS LINE ! ! ! //
         printDataLine(lines[totalLines]);
 
         // If line contains calculation
@@ -857,36 +874,55 @@ int readFile(char* path)
             // Define index of calc function
             int funcIdx = -1;
 
+            // Will be set to 1 if operation is known
+            int funcCalled = 0;
+
             // Get command
             char* command = lines[totalLines].elements[0];
 
-            // Get arguments
+            // Get 1st arguments
             int commandIdx1 = atoi( lines[totalLines].elements[1] );
 
+            // Defing 2nd argument
             int commandIdx2 = 1;
-            // If there's more than 1 argument
+
+            // If there's more than 1 argument, read the second one
             if ( lines[totalLines].elementCount > 2 )
-                commandIdx2 = atoi( lines[totalLines].elements[2] );
+                { commandIdx2 = atoi( lines[totalLines].elements[2] ); funcCalled = 1; }
 
-            // Check if calling unar operation
+            // Check if calling unar operation for sets
             if ( (funcIdx = indexOfStr(command, setFunctionsUnarNames, 2)) != -1 )
-                setFunctionsUnar[funcIdx]( lines[commandIdx1 - 1] ); 
+                { setFunctionsUnar[funcIdx]( lines[commandIdx1 - 1] ); funcCalled = 1; }
 
-            // Check if calling binary operation
+            // Check if calling binary operation for sets
             if ( (funcIdx = indexOfStr(command, setFunctionsBinarNames, 7)) != -1 )
-                setFunctionsBinar[funcIdx]( lines[commandIdx1 - 1], lines[commandIdx2 - 1] ); 
+                { setFunctionsBinar[funcIdx]( lines[commandIdx1 - 1], lines[commandIdx2 - 1] ); funcCalled = 1; }
 
+            // Check if calling operation for relation,
+            // which does not need a universe
             if ( (funcIdx = indexOfStr(command, relFunctionsNames_1arg, 6)) != -1 )
-                relFunctions_1arg[funcIdx]( lines[commandIdx1 - 1] );
+                { relFunctions_1arg[funcIdx]( lines[commandIdx1 - 1] ); funcCalled = 1; }
 
+            // Check if calling operation for relation,
+            // which does need a universe
             if ( (funcIdx = indexOfStr(command, relFunctionsNames_2arg, 2)) != -1 )
-                relFunctions_2arg[funcIdx]( lines[commandIdx1 - 1], lines[0] );
+                { relFunctions_2arg[funcIdx]( lines[commandIdx1 - 1], lines[0] ); funcCalled = 1; }
 
+            // Check for injective and surjective.
+            // Pass 1 to the (int print) argument, so 
+            // they will print "true" or "false"
             if ( strCmp(command, "injective") )
-                injective(lines[commandIdx1 - 1], 1);
+                { injective(lines[commandIdx1 - 1], 1); funcCalled = 1; }
 
             if ( strCmp(command, "surjective") )
-                surjective(lines[commandIdx1 - 1], lines[0], 1);
+                { surjective(lines[commandIdx1 - 1], lines[0], 1); funcCalled = 1; }
+
+            // If none of the functions was called
+            if ( funcCalled == 0 )
+            {
+                fprintf(stderr, "Erorr: unknown operation %s", command);
+                return -1;
+            }
         }
 
         // Increase number of readed lines
