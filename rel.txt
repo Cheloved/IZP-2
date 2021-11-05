@@ -1,0 +1,25 @@
+U a b c d
+R (a a) (b b) (c c) (d d)
+R (a a) (c c)
+R (a a) (a b) (b a) (c d) (d c)
+R (a a) (a b) (b a) (c d)
+R (a b) (a c) (a d) (b c) (b d)
+R (a b) (b c) (a d)
+R (a c) (b c) (c c)
+R (a b) (b c) (a d)
+R (a b) (b c) (d d) (d a)
+C reflexive 2
+C reflexive 3
+C symmetric 4
+C symmetric 5
+C transitive 6
+C transitive 7
+C function 8
+C function 9
+C domain 4
+C codomain 6
+C injective 8
+C injective 9
+C surjective 8
+C surjective 10
+C bijective 9
