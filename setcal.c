@@ -656,7 +656,7 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
     if ( e == -1 )  // Handle error
         return -1;
 
-    // Print line
+    // ! ! ! DELETE THIS LINE ! ! ! //
     printf("\n%s\n", line);
 
     // Get data type according
