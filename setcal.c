@@ -78,12 +78,21 @@ int strCmp(char* str1, char* str2)
 // ------------------------------------------ //
 
 // ----- Functions working with set's/relation's elements ----- //
-
 // Compares two elements
 // ( added for better readability )
 int isEqual( Element e1, Element e2 )
 {
     return strCmp((char*) e1, (char*) e2);
+}
+
+// Checks wheather number exists in int array
+int isIn ( int element, int* array, int arraySize )
+{
+    for ( int i = 0; i < arraySize; i++ )
+        if ( element == array[i] )
+            return 1;
+    
+    return 0;
 }
 
 // Find index of string in array if it exists in there.
@@ -133,7 +142,6 @@ int indexOfRelationByNum(int left, int right, Line relation)
 // ------------------------------------------------------------ //
 
 // ----- Functions working with sets ----- //
-
 // Checks wheather set is empty or not
 void empty(Line line)
 {
@@ -247,7 +255,8 @@ void equals(Line lineA, Line lineB)
         return;
     }
 
-    // If at least one element is not 
+    // If at least one element is not equal,
+    // print "false"
     for ( int i = 0; i < lineA.elementCount; i++ )
         if ( indexByNum(lineA.indexes[i], &lineB) == -1 )
         {
@@ -260,10 +269,12 @@ void equals(Line lineA, Line lineB)
 // --------------------------------------- //
 
 // ----- Functions working with relations ----- //
-
-
+// Checks if relation is reflexive
 int reflexive(Line relation, Line universe)
 {
+    // All of universe elements should be in relation
+    // with themselves ( aRa ).
+    // If at least one is not, print "false"
     for ( int i = 0; i < universe.elementCount; i++ )
         if ( indexOfRelationByNum(i, i, relation) == -1 )
         {
@@ -275,14 +286,15 @@ int reflexive(Line relation, Line universe)
     return 1;
 }
 
+// Checks if relation is symmetric
 int symmetric(Line relation)
 {
     for ( int i = 0; i < relation.elementCount; i++ )
     {
         int left = relation.relations[i]->leftIndex;
-        int right = relation.relations[i]->rightIndex;
-        if ( indexOfRelationByNum( right, left, relation ) == -1 )
-        {
+        int right = relation.relations[i]->rightIndex;              // If (left, right) is in relation,
+        if ( indexOfRelationByNum( right, left, relation ) == -1 )  // but (right, left) is not,
+        {                                                           // relations is not symmetric. return "false"
             printf("false\n");
             return 0;
         }
@@ -291,14 +303,15 @@ int symmetric(Line relation)
     return 1;
 }
 
+// Check if relation if antisymmetric
 int antisymmetric(Line relation)
 {
     for ( int i = 0; i < relation.elementCount; i++ )
     {
         int left = relation.relations[i]->leftIndex;
-        int right = relation.relations[i]->rightIndex;
-        if ( indexOfRelationByNum( right, left, relation ) != -1 )
-        {
+        int right = relation.relations[i]->rightIndex;              // If (left, right) is in relation
+        if ( indexOfRelationByNum( right, left, relation ) != -1 )  // and (right, left) is in relation
+        {                                                           // 'left' should be equal to 'right'
             if ( left != right )
             {
                 printf("false\n");
@@ -310,15 +323,16 @@ int antisymmetric(Line relation)
     return 1;
 }
 
+// Checks if relation is transitive
 int transitive(Line relation)
 {
     for ( int i = 0; i < relation.elementCount; i++ )
     {
-        int a = relation.relations[i]->leftIndex;
-        int b = relation.relations[i]->rightIndex;
-        for ( int c = 0; c < relation.elementCount; c++ )
-            if ( indexOfRelationByNum(b, c, relation) != -1 ) 
-                if ( indexOfRelationByNum(a, c, relation) == -1 )
+        int a = relation.relations[i]->leftIndex;                   // If aRb
+        int b = relation.relations[i]->rightIndex;                  // Look for such 'c', that
+        for ( int c = 0; c < relation.elementCount; c++ )           // (b, c) is in relation.
+            if ( indexOfRelationByNum(b, c, relation) != -1 )       // If found, (a, c) must be in relation.
+                if ( indexOfRelationByNum(a, c, relation) == -1 )   // If not, print "false"
                 {
                     printf("false\n");
                     return 0;
@@ -328,8 +342,12 @@ int transitive(Line relation)
     return 1;
 }
 
+// Checks if relation is function
 int function(Line relation)
 {
+    // Each 'left' element should have only ONE 'right'.
+    // If it has more, 'right's should be equal.
+    // If not, print "false"
     for ( int i = 0; i < relation.elementCount - 1; i++ )
     {
         int left = relation.relations[i]->leftIndex;
@@ -346,34 +364,31 @@ int function(Line relation)
     return 1;
 }
 
-int isIn ( int element, int* array, int arraySize )
-{
-    for ( int i = 0; i < arraySize; i++ )
-        if ( element == array[i] )
-            return 1;
-    
-    return 0;
-}
-
+// Print domain of relation
 int domain(Line relation)
 {
+    // Allocate memory for domain
     int maxLen = relation.elementCount;
     int* d = (int*)calloc(maxLen, sizeof(int));
+    
+    // And initialize them as -1's
     for ( int i = 0; i < maxLen; i++ )
         d[i] = -1;
 
     for ( int i = 0; i < maxLen; i++ )
-        if ( !isIn(relation.relations[i]->leftIndex, d, maxLen) )
+        if ( !isIn(relation.relations[i]->leftIndex, d, maxLen) )  // If 'left' is not in domain yet
         {
-            d[i] = relation.relations[i]->leftIndex;
-            printf("%s ", relation.relations[i]->leftElement);
+            d[i] = relation.relations[i]->leftIndex;               // Add them to array
+            printf("%s ", relation.relations[i]->leftElement);     // and print to stdout
         }
     printf("\n");
     return 0;
 }
 
+// Prints codomain of relation
 int codomain(Line relation)
 {
+    // Works on the same principle, as function above
     int maxLen = relation.elementCount;
     int* d = (int*)calloc(maxLen, sizeof(int));
     for ( int i = 0; i < maxLen; i++ )
@@ -389,6 +404,7 @@ int codomain(Line relation)
     return 0;
 }
 
+// Checks if relations is injective
 int injective(Line relation, int print)
 {
     for ( int i = 0; i < relation.elementCount - 1; i++ )
