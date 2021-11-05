@@ -613,27 +613,41 @@ int splitElements(Line* line, char* str)
     return 0;
 }
 
+// Subdivide element into two different variables
 int subdivideRelations(Line* line)
 {
+    // Allocate memory for relations array
     line->relations = (RelationElement**)calloc(line->elementCount, sizeof(RelationElement**));
+
+    // Go through all of the elements
     for ( int i = 0; i < line->elementCount; i++ )
     {
+        // Find space (which is split symbol)
         int spaceIndex = findSpaceAfter(0, line->elements[i]);
+
+        // Get length of the element string
         int len = strLen( line->elements[i] );
+
+        // Allocate memory for single relation
         line->relations[i] = (RelationElement*)calloc(1, sizeof(RelationElement*));
+
+        // Allocate memory for element strings 
         line->relations[i]->leftElement = calloc(spaceIndex + 1, sizeof(char));
         line->relations[i]->rightElement = calloc(len - spaceIndex, sizeof(char));
 
+        // Copy data to left element
         for ( int j = 0; j < spaceIndex; j++ )
             line->relations[i]->leftElement[j] = line->elements[i][j];
-        line->relations[i]->leftElement[spaceIndex] = '\0';
 
+        // Copy data to right element
         for ( int j = spaceIndex + 1; j < len; j++ )
             line->relations[i]->rightElement[ j - spaceIndex - 1] = line->elements[i][j];
     }
     return 0;
 }
 
+// Reads line from a file and
+// passes data from it to the data structure
 int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
 {
     // Read a line of data and handle a return value
@@ -645,7 +659,8 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
     // Print line
     printf("\n%s\n", line);
 
-    /* Get data type */
+    // Get data type according
+    // to the first symbor in line
     enum DataType _type = U;
     switch (line[0]) 
     {
@@ -660,28 +675,37 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
     lineBuffer->_type = _type;
     lineBuffer->id    = id + 1;
 
-    // 
+    // Get number of elements
     lineBuffer->elementCount = getElementCount(line, lineBuffer->_type);
+
+    // Split elements
     if ( splitElements(lineBuffer, line) != 0 )
        return -1;
 
+    // Also split elements into relation elements
+    // if type is relation
     if ( _type == R )
         if ( subdivideRelations(lineBuffer) != 0 )
             return -1;
 
+    // If it was the last line, stop reading
     if ( e == 1 )
         return 1;
     return 0;
 }
 
+// Returns number of chars in file
 long getFileSize(FILE* file)
 {
-    fseek(file, 0, SEEK_END);
-    int fileSize = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    fseek(file, 0, SEEK_END);   // Go to the end of file
+    int fileSize = ftell(file); // Get position
+    fseek(file, 0, SEEK_SET);   // Reset position to 0
     return fileSize;
 }
 
+// Assign indexes to the universe
+// it'll be just (0, 1, 2, ..., n), where
+// n is number of elements
 int assingnUniverse(Line* line)
 {
     line->indexes = calloc(line->elementCount, sizeof(int));
@@ -690,13 +714,21 @@ int assingnUniverse(Line* line)
     return 0;
 }
 
+// Assign indexes to a data line
+// according to the universe.
+// E.g. universe = {a, b, c, d};
+// set = { b, d }; function will assign {1, 3}
 int assignElementIndexes(Line* line, Line* universe)
 {
+    // Do not assign elements to 
+    // calculation data line
     if ( line->_type == C )
         return 0;
 
+    // If it's relation
     if ( line->_type == R )
     {
+        // Set indexes both for left and right elements
         for ( int i = 0; i < line->elementCount; i++ )
         {
             int idxLeft = indexOf(line->relations[i]->leftElement, universe);
@@ -716,14 +748,14 @@ int assignElementIndexes(Line* line, Line* universe)
             line->relations[i]->rightIndex = idxRight;
         }
     } else {
-        line->indexes = calloc(line->elementCount, sizeof(int));
-        for ( int i = 0; i < line->elementCount; i++ )
+        line->indexes = calloc(line->elementCount, sizeof(int)); // Allocate memory for the array
+        for ( int i = 0; i < line->elementCount; i++ )           // of indexes
         {
-            int idx = indexOf(line->elements[i], universe);
+            int idx = indexOf(line->elements[i], universe);      // Get index from universe
             if ( idx == -1 )
                 return -1;
-            else
-                line->indexes[i] = idx;
+            else                                                 // If it exists, print.
+                line->indexes[i] = idx;                          // else return error
         }
     }
     return 0;
