@@ -1,0 +1,15 @@
+U dad mom girl boy man woman
+S dad boy man
+S mom girl woman
+S dad boy
+S 
+C empty 2
+C empty 5
+C card 3
+C union 2 3
+C union 2 4
+C intersect 2 4
+C complement 4
+C minus 2 4
+C subseteq 4 2
+C subseteq 2 4

@@ -657,7 +657,7 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
         return -1;
 
     // ! ! ! DELETE THIS LINE ! ! ! //
-    printf("\n%s\n", line);
+    //printf("\n%s\n", line);
 
     // Get data type according
     // to the first symbor in line
@@ -866,7 +866,7 @@ int readFile(char* path)
             assignElementIndexes(&lines[totalLines], &lines[0]);
 
         // ! ! ! DELETE THIS LINE ! ! ! //
-        printDataLine(lines[totalLines]);
+        //printDataLine(lines[totalLines]);
 
         // If line contains calculation
         if ( lines[totalLines]._type == C )
