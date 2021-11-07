@@ -272,6 +272,10 @@ void equals(Line lineA, Line lineB)
 // Checks if relation is reflexive
 int reflexive(Line relation, Line universe)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     // All of universe elements should be in relation
     // with themselves ( aRa ).
     // If at least one is not, print "false"
@@ -289,6 +293,10 @@ int reflexive(Line relation, Line universe)
 // Checks if relation is symmetric
 int symmetric(Line relation)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     for ( int i = 0; i < relation.elementCount; i++ )
     {
         int left = relation.relations[i]->leftIndex;
@@ -306,6 +314,10 @@ int symmetric(Line relation)
 // Check if relation if antisymmetric
 int antisymmetric(Line relation)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     for ( int i = 0; i < relation.elementCount; i++ )
     {
         int left = relation.relations[i]->leftIndex;
@@ -326,6 +338,10 @@ int antisymmetric(Line relation)
 // Checks if relation is transitive
 int transitive(Line relation)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     for ( int i = 0; i < relation.elementCount; i++ )
     {
         int a = relation.relations[i]->leftIndex;                   // If aRb
@@ -345,6 +361,10 @@ int transitive(Line relation)
 // Checks if relation is function
 int function(Line relation)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     // Each 'left' element should have only ONE 'right'.
     // If it has more, 'right's should be equal.
     // If not, print "false"
@@ -367,6 +387,10 @@ int function(Line relation)
 // Print domain of relation
 int domain(Line relation)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     // Allocate memory for domain
     int maxLen = relation.elementCount;
     int* d = (int*)calloc(maxLen, sizeof(int));
@@ -388,6 +412,10 @@ int domain(Line relation)
 // Prints codomain of relation
 int codomain(Line relation)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     // Works on the same principle, as function above
     int maxLen = relation.elementCount;
     int* d = (int*)calloc(maxLen, sizeof(int));
@@ -407,6 +435,10 @@ int codomain(Line relation)
 // Checks if relations is injective
 int injective(Line relation, int print)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     // If it's called from bijective function
     // print == 0
     for ( int i = 0; i < relation.elementCount - 1; i++ )
@@ -430,6 +462,10 @@ int injective(Line relation, int print)
 // Checks if relation is surjective
 int surjective(Line relation, Line universe, int print)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     // If it's called from bijective function
     // print == 0
     for ( int i = 0; i < universe.elementCount; i++ )                       // Each element in universe
@@ -459,6 +495,10 @@ int surjective(Line relation, Line universe, int print)
 // (should be either injective AND surjective)
 int bijective(Line relation, Line universe)
 {
+    // If it's not a relation
+    if ( relation.relations == NULL )
+        return -1;
+
     if ( injective(relation, 0) && surjective(relation, universe, 0) )
         printf("true\n");
     else
@@ -827,7 +867,7 @@ int readFile(char* path)
         it's possible to subdivide functions of the same type
         into groups and make the arrays of function pointers.
 
-        type_function_smth_names is to relate
+        type_function_smth_names is here to relate
         command to functions 
     */
     char* setFunctionsUnarNames[2] = {"empty", "card"};
