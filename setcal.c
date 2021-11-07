@@ -218,6 +218,7 @@ void card(Line line)
 // Prints complement of set 
 void complement(Line line, Line universe)
 {
+    printf("S ");
     for( int i = 0; i < universe.elementCount; i++ )         // Go through all elements in universe.
     {                                                        // If element does not exists in this set,
         if ( indexByNum(universe.indexes[i], &line) == -1 )  // print it
@@ -807,7 +808,7 @@ long getFileSize(FILE* file)
     return fileSize;
 }
 
-// ! ! ! DELETE THIS FUNCTION ! ! ! //
+// Shows details about data line
 void printDataLine(Line line)
 {
     printf("Data line %d\n", line.id);
@@ -896,6 +897,11 @@ int readFile(char* path)
     int e = 0;     
     while ( 1 )
     {
+        if ( totalLines == 1000 )
+        {
+            fprintf(stderr, "Error: too many lines");
+            return -1;
+        }
         // Read data and handle an error
         e = getData(&lineBuffer, file, fileSize, totalLines);
         if ( e == -1 )
@@ -911,7 +917,7 @@ int readFile(char* path)
         else
             assignElementIndexes(&lines[totalLines], &lines[0]);
 
-        // ! ! ! DELETE THIS LINE ! ! ! //
+        // Uncomment this to see more details about each data line
         //printDataLine(lines[totalLines]);
 
         // If line contains calculation
