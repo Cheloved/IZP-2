@@ -139,6 +139,64 @@ int indexOfRelationByNum(int left, int right, Line relation)
     
     return -1;
 }
+
+// Assign indexes to the universe
+// it'll be just (0, 1, 2, ..., n), where
+// n is number of elements
+int assingnUniverse(Line* line)
+{
+    line->indexes = calloc(line->elementCount, sizeof(int));
+    for ( int i = 0; i < line->elementCount; i++ )
+        line->indexes[i] = i;
+    return 0;
+}
+
+// Assign indexes to a data line
+// according to the universe.
+// E.g. universe = {a, b, c, d};
+// set = { b, d }; function will assign {1, 3}
+int assignElementIndexes(Line* line, Line* universe)
+{
+    // Do not assign elements to 
+    // calculation data line
+    if ( line->_type == C )
+        return 0;
+
+    // If it's relation
+    if ( line->_type == R )
+    {
+        // Set indexes both for left and right elements
+        for ( int i = 0; i < line->elementCount; i++ )
+        {
+            int idxLeft = indexOf(line->relations[i]->leftElement, universe);
+            if (idxLeft == -1)
+            {
+                printf("Error: %s does not exists in universe\n", line->relations[i]->leftElement);
+                return -1;
+            }
+            int idxRight = indexOf(line->relations[i]->rightElement, universe);
+            if (idxRight == -1)
+            {
+                printf("Error: %s does not exists in universe\n", line->relations[i]->rightElement);
+                return -1;
+            }
+
+            line->relations[i]->leftIndex = idxLeft;
+            line->relations[i]->rightIndex = idxRight;
+        }
+    } else {
+        line->indexes = calloc(line->elementCount, sizeof(int)); // Allocate memory for the array
+        for ( int i = 0; i < line->elementCount; i++ )           // of indexes
+        {
+            int idx = indexOf(line->elements[i], universe);      // Get index from universe
+            if ( idx == -1 )
+                return -1;
+            else                                                 // If it exists, print.
+                line->indexes[i] = idx;                          // else return error
+        }
+    }
+    return 0;
+}
 // ------------------------------------------------------------ //
 
 // ----- Functions working with sets ----- //
@@ -171,6 +229,7 @@ void complement(Line line, Line universe)
 // Prints union of two sets
 void _union(Line lineA, Line lineB)
 {
+    printf("S ");
     for ( int i = 0; i < lineA.elementCount; i++ )         // Print all the elements
         printf("%s ", lineA.elements[i]);                  // in first set
     
@@ -184,6 +243,7 @@ void _union(Line lineA, Line lineB)
 // Prints intersection of two sets
 void intersect(Line lineA, Line lineB)
 {
+    printf("S ");
     for ( int i = 0; i < lineA.elementCount; i++ )         // If elements exists in A
         if ( indexByNum(lineA.indexes[i], &lineB) != -1 )  // AND in B,
             printf("%s ", lineA.elements[i]);              // print it
@@ -193,6 +253,7 @@ void intersect(Line lineA, Line lineB)
 // Prints A \ B
 void minus(Line lineA, Line lineB)
 {
+    printf("S ");
     for ( int i = 0; i < lineA.elementCount; i++ )         // If element exists in A,
         if ( indexByNum(lineA.indexes[i], &lineB) == -1 )  // but does not exist in B,
             printf("%s ", lineA.elements[i]);              // Print it
@@ -399,6 +460,7 @@ int domain(Line relation)
     for ( int i = 0; i < maxLen; i++ )
         d[i] = -1;
 
+    printf("S ");
     for ( int i = 0; i < maxLen; i++ )
         if ( !isIn(relation.relations[i]->leftIndex, d, maxLen) )  // If 'left' is not in domain yet
         {
@@ -422,6 +484,7 @@ int codomain(Line relation)
     for ( int i = 0; i < maxLen; i++ )
         d[i] = -1;
 
+    printf("S ");
     for ( int i = 0; i < maxLen; i++ )
         if ( !isIn(relation.relations[i]->rightIndex, d, maxLen) )
         {
@@ -696,9 +759,6 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
     if ( e == -1 )  // Handle error
         return -1;
 
-    // ! ! ! DELETE THIS LINE ! ! ! //
-    //printf("\n%s\n", line);
-
     // Get data type according
     // to the first symbor in line
     enum DataType _type = U;
@@ -714,6 +774,10 @@ int getData(Line* lineBuffer, FILE* file, long fileSize, int id)
     // Set struct members
     lineBuffer->_type = _type;
     lineBuffer->id    = id + 1;
+
+    // Print line if it's not a calculation
+    if ( _type != C )
+        printf("%s\n", line);
 
     // Get number of elements
     lineBuffer->elementCount = getElementCount(line, lineBuffer->_type);
@@ -741,64 +805,6 @@ long getFileSize(FILE* file)
     int fileSize = ftell(file); // Get position
     fseek(file, 0, SEEK_SET);   // Reset position to 0
     return fileSize;
-}
-
-// Assign indexes to the universe
-// it'll be just (0, 1, 2, ..., n), where
-// n is number of elements
-int assingnUniverse(Line* line)
-{
-    line->indexes = calloc(line->elementCount, sizeof(int));
-    for ( int i = 0; i < line->elementCount; i++ )
-        line->indexes[i] = i;
-    return 0;
-}
-
-// Assign indexes to a data line
-// according to the universe.
-// E.g. universe = {a, b, c, d};
-// set = { b, d }; function will assign {1, 3}
-int assignElementIndexes(Line* line, Line* universe)
-{
-    // Do not assign elements to 
-    // calculation data line
-    if ( line->_type == C )
-        return 0;
-
-    // If it's relation
-    if ( line->_type == R )
-    {
-        // Set indexes both for left and right elements
-        for ( int i = 0; i < line->elementCount; i++ )
-        {
-            int idxLeft = indexOf(line->relations[i]->leftElement, universe);
-            if (idxLeft == -1)
-            {
-                printf("Error: %s does not exists in universe\n", line->relations[i]->leftElement);
-                return -1;
-            }
-            int idxRight = indexOf(line->relations[i]->rightElement, universe);
-            if (idxRight == -1)
-            {
-                printf("Error: %s does not exists in universe\n", line->relations[i]->rightElement);
-                return -1;
-            }
-
-            line->relations[i]->leftIndex = idxLeft;
-            line->relations[i]->rightIndex = idxRight;
-        }
-    } else {
-        line->indexes = calloc(line->elementCount, sizeof(int)); // Allocate memory for the array
-        for ( int i = 0; i < line->elementCount; i++ )           // of indexes
-        {
-            int idx = indexOf(line->elements[i], universe);      // Get index from universe
-            if ( idx == -1 )
-                return -1;
-            else                                                 // If it exists, print.
-                line->indexes[i] = idx;                          // else return error
-        }
-    }
-    return 0;
 }
 
 // ! ! ! DELETE THIS FUNCTION ! ! ! //
