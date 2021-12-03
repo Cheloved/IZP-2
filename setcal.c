@@ -118,7 +118,7 @@ int indexOf(Element e, Line* line)
 }
 
 // This function works faster than the one above, 
-// because comparing strings takes more steps, that
+// because comparing strings takes more steps, than
 // comparing numbers.
 int indexByNum(int idx, Line* line)
 {
@@ -497,7 +497,7 @@ int codomain(Line relation)
 }
 
 // Checks if relations is injective
-int injective(Line relation, int print)
+int injective(Line relation, Line A, Line B, int print)
 {
     // If it's not a relation
     if ( relation.relations == NULL )
@@ -509,6 +509,18 @@ int injective(Line relation, int print)
     {
         int left = relation.relations[i]->leftIndex;
         int right = relation.relations[i]->rightIndex;
+
+        if ( indexByNum(left, &A) == -1)
+        {
+            printf("Error: %s does not exists in %d set", relation.relations[i]->leftElement, A.id);
+            return -1;
+        }
+        if ( indexByNum(right, &B) == -1 )
+        {
+            printf("Error: %s does not exists in %d set", relation.relations[i]->leftElement, B.id);
+            return -1;
+        }
+
         for ( int j = i + 1; j < relation.elementCount; j++ )
             if ( relation.relations[j]->rightIndex == right )   // If for the same right parts
                 if ( relation.relations[j]->leftIndex != left ) // there're different left
@@ -524,7 +536,7 @@ int injective(Line relation, int print)
 }
 
 // Checks if relation is surjective
-int surjective(Line relation, Line universe, int print)
+int surjective(Line relation, Line A, Line B, int print)
 {
     // If it's not a relation
     if ( relation.relations == NULL )
@@ -532,12 +544,17 @@ int surjective(Line relation, Line universe, int print)
 
     // If it's called from bijective function
     // print == 0
-    for ( int i = 0; i < universe.elementCount; i++ )                       // Each element in universe
+    for ( int i = 0; i < B.elementCount; i++ )                              // Each element in B set
     {                                                                       // should have at least one
         int argExists = 0;                                                  // 'left' in relation
         for ( int j = 0; j < relation.elementCount; j++ )
         {
-            if ( relation.relations[j]->rightIndex == universe.indexes[i] )
+            if ( indexByNum(relation.relations[j]->leftIndex, &A) == -1)
+            {
+                printf("Error: %s does not exists in %d set", relation.relations[i]->leftElement, A.id);
+                return -1;
+            }
+            if ( relation.relations[j]->rightIndex == B.indexes[i] )
             {
                 argExists = 1;
                 break;
@@ -557,13 +574,13 @@ int surjective(Line relation, Line universe, int print)
 
 // Checks if relation is bijective
 // (should be either injective AND surjective)
-int bijective(Line relation, Line universe)
+int bijective(Line relation, Line A, Line B) 
 {
     // If it's not a relation
     if ( relation.relations == NULL )
         return -1;
 
-    if ( injective(relation, 0) && surjective(relation, universe, 0) )
+    if ( injective(relation, A, B, 0) && surjective(relation, A, B, 0) )
         printf("true\n");
     else
         printf("false\n");
@@ -673,7 +690,7 @@ int splitElements(Line* line, char* str)
         start++;
     start++;
 
-    // This loop goes though the string
+    // This loop goes through the string
     // char by char
     for ( int i = start; i < len; i++ )
     {
@@ -886,8 +903,8 @@ int readFile(char* path)
     char* relFunctionsNames_1arg[6] = { "symmetric", "antisymmetric", "transitive", "function", "domain", "codomain" };
     int(*relFunctions_1arg[6])(Line line) = { &symmetric, &antisymmetric, &transitive, &function, &domain, &codomain };
 
-    char* relFunctionsNames_2arg[2] = { "reflexive", "bijective" };
-    int(*relFunctions_2arg[2])(Line line, Line universe) = { &reflexive, &bijective };
+    char* relFunctionsNames_2arg[2] = { "reflexive" };
+    int(*relFunctions_2arg[2])(Line line, Line universe) = { &reflexive };
     /*
         injective and surjective are not here,
         because of their arguments
@@ -935,12 +952,16 @@ int readFile(char* path)
             // Get 1st arguments
             int commandIdx1 = atoi( lines[totalLines].elements[1] );
 
-            // Defing 2nd argument
+            // Define 2nd and 3rd arguments
             int commandIdx2 = 1;
+            int commandIdx3 = 1;
 
             // If there's more than 1 argument, read the second one
             if ( lines[totalLines].elementCount > 2 )
-                { commandIdx2 = atoi( lines[totalLines].elements[2] ); funcCalled = 1; }
+                { commandIdx2 = atoi( lines[totalLines].elements[2] ); }
+
+            if ( lines[totalLines].elementCount > 3)
+                { commandIdx3 = atoi( lines[totalLines].elements[3] ); }
 
             // Check if calling unar operation for sets
             if ( (funcIdx = indexOfStr(command, setFunctionsUnarNames, 2)) != -1 )
@@ -960,14 +981,17 @@ int readFile(char* path)
             if ( (funcIdx = indexOfStr(command, relFunctionsNames_2arg, 2)) != -1 )
                 { relFunctions_2arg[funcIdx]( lines[commandIdx1 - 1], lines[0] ); funcCalled = 1; }
 
-            // Check for injective and surjective.
+            // Check for injective ,surjective and bijective.
             // Pass 1 to the (int print) argument, so 
             // they will print "true" or "false"
             if ( strCmp(command, "injective") )
-                { injective(lines[commandIdx1 - 1], 1); funcCalled = 1; }
+                { injective(lines[commandIdx1 - 1], lines[commandIdx2 - 1], lines[commandIdx3 - 1], 1); funcCalled = 1; }
 
             if ( strCmp(command, "surjective") )
-                { surjective(lines[commandIdx1 - 1], lines[0], 1); funcCalled = 1; }
+                { surjective(lines[commandIdx1 - 1], lines[commandIdx2 - 1], lines[commandIdx3 - 1], 1); funcCalled = 1; }
+
+            if ( strCmp(command, "bijective") )
+                { bijective(lines[commandIdx1 - 1], lines[commandIdx2 - 1], lines[commandIdx3 - 1]); funcCalled = 1; }
 
             // If none of the functions was called
             if ( funcCalled == 0 )
